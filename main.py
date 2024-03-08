@@ -53,20 +53,24 @@ def big_vip_sign():
     logging.info("大会员签到成功！")
 
 
+sign_status = True
 if not judge.cookies_login():
-    judge.QR_login()
-big_vip_sign()
-while True:
-    try:
-        judge_id = get_next_judge()
-        print(judge_id)
-        case_type = get_judge_info(case_id=judge_id)
-        vote(vote_num=0, case_id=judge_id)
-        if case_type in [1, 3]:
-            vote(vote_num=1, case_id=judge_id)
-        if case_type in [2, 4]:
-            vote(vote_num=11, case_id=judge_id)
-        time.sleep(random.randint(5, 10))
-    except TypeError:
-        logging.info("任务结束或中断！")
-        sys.exit()
+    sign_status = judge.QR_login()
+if sign_status:
+    big_vip_sign()
+    while True:
+        try:
+            judge_id = get_next_judge()
+            print(judge_id)
+            case_type = get_judge_info(case_id=judge_id)
+            vote(vote_num=0, case_id=judge_id)
+            if case_type in [1, 3]:
+                vote(vote_num=1, case_id=judge_id)
+            if case_type in [2, 4]:
+                vote(vote_num=11, case_id=judge_id)
+            time.sleep(random.randint(5, 10))
+        except TypeError:
+            logging.info("任务结束或中断！")
+            sys.exit()
+else:
+    logging.error("用户未登录或登录失败，任务结束！")
