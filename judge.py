@@ -136,19 +136,34 @@ class Judgement:
         post_data = {
             "csrf": self.csrf,
         }
-        data_json = requests.get(url=url, headers=self.get_header, data=post_data).json()
-        if data_json["code"] != 0:
-            logging.error("Error:" + data_json["message"])
+        try:
+            data_json = requests.get(url=url, headers=self.get_header, data=post_data).json()
+            if data_json["code"] != 0:
+                logging.error("Error:" + data_json["message"])
+                return False
+            else:
+                logging.info(url + "发送GET请求成功！")
+                return data_json["data"]
+        except requests.exceptions.JSONDecodeError:
+            logging.error("JSON解析有误！请检查接口返回！")
             return False
-        else:
-            logging.info(url + "发送GET请求成功！")
-            return data_json["data"]
+        except KeyError:
+            logging.error("QR登录失败！")
+            return True
+
 
     def post_data(self, url, data):
-        data_json = requests.post(url=url, data=data, headers=self.post_header).json()
-        if data_json["code"] != 0:
-            logging.error("Error:" + data_json["message"])
+        try:
+            data_json = requests.post(url=url, data=data, headers=self.post_header).json()
+            if data_json["code"] != 0:
+                logging.error("Error:" + data_json["message"])
+                return False
+            else:
+                logging.info(url + "发送POST请求成功！")
+                return True
+        except requests.exceptions.JSONDecodeError:
+            logging.error("JSON解析有误！请检查接口返回！")
             return False
-        else:
-            logging.info(url + "发送POST请求成功！")
+        except KeyError:
+            logging.error("QR登录失败！")
             return True
