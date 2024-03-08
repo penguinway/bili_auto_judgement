@@ -151,7 +151,6 @@ class Judgement:
             logging.error("QR登录失败！")
             return True
 
-
     def post_data(self, url, data):
         try:
             data_json = requests.post(url=url, data=data, headers=self.post_header).json()
