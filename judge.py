@@ -7,6 +7,7 @@ import qrcode
 import re
 import zlib
 import brotli
+import sys
 
 logging.basicConfig(
     level=logging.INFO,
@@ -84,7 +85,7 @@ class Judgement:
                     self.get_header["Cookie"] += cookie['name'] + "=" + cookie["value"] + ";"
                     self.post_header["Cookie"] += cookie['name'] + "=" + cookie["value"] + ";"
             check_url = "https://api.bilibili.com/x/web-interface/nav"
-            login_status = requests.get(url=check_url, headers=self.get_header, verify=False).json()
+            login_status = requests.get(url=check_url, headers=self.get_header).json()
             print(login_status)
             if not login_status["code"]:
                 logging.info(f'用户{login_status["data"]["uname"]}, 欢迎使用！')
@@ -157,9 +158,13 @@ class Judgement:
             "csrf": self.csrf,
         }
         try:
-            get_datas = requests.get(url=url, headers=self.get_header, data=post_data, verify=False)
-            decompressed_content = decompress_response(get_datas)
-            data_json = json.loads(decompressed_content)
+            get_datas = requests.get(url=url, headers=self.get_header, data=post_data)
+            data_json = None
+            if sys.platform.startswith('win'):
+                data_json = get_datas.json()
+            elif sys.platform.startswith('linux'):
+                decompressed_content = decompress_response(get_datas)
+                data_json = json.loads(decompressed_content)
             if data_json["code"] != 0:
                 logging.error("Error:" + data_json["message"])
                 return False
@@ -178,9 +183,13 @@ class Judgement:
 
     def post_data(self, url, data):
         try:
-            post_datas = requests.post(url=url, data=data, headers=self.post_header, verify=False)
-            decompressed_content = decompress_response(post_datas)
-            data_json = json.loads(decompressed_content)
+            post_datas = requests.post(url=url, data=data, headers=self.post_header)
+            data_json = None
+            if sys.platform.startswith('win'):
+                data_json = post_datas.json()
+            elif sys.platform.startswith('linux'):
+                decompressed_content = decompress_response(post_datas)
+                data_json = json.loads(decompressed_content)
             if data_json["code"] != 0:
                 logging.error("Error:" + data_json["message"])
                 return False
