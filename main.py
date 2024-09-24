@@ -17,16 +17,19 @@ def get_judge_data():  # 获取夹击妹抖的信息
     judge_data = judge.get_data(url=data_url)
     term_end = judge_data["term_end"]
     status = judge_data["status"]
+    logging.info("获取夹击妹抖信息")
     return term_end, status
 
 
 def get_next_judge():
     get_url = "https://api.bilibili.com/x/credit/v2/jury/case/next"
+    logging.info("获取下一案件信息")
     return judge.get_data(url=get_url)["case_id"]
 
 
 def get_judge_info(case_id):
     info_url = "https://api.bilibili.com/x/credit/v2/jury/case/info?case_id=" + str(case_id)
+    logging.info("获取案件" + str(case_id) + "信息")
     return judge.get_data(url=info_url)["case_type"]
 
 
@@ -49,8 +52,8 @@ def big_vip_sign():
     payload = {
         "csrf": judge.csrf,
     }
+    logging.info("大会员签到")
     sign_result = judge.post_data(url=sign_url, data=payload)
-    logging.info("大会员签到成功！")
 
 
 sign_status = True

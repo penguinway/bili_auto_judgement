@@ -5,6 +5,8 @@ from urllib.parse import quote
 import time
 import qrcode
 import re
+import zlib
+import brotli
 
 logging.basicConfig(
     level=logging.INFO,
@@ -18,6 +20,18 @@ def qrcode_generate(data):
     qr.add_data(data=data)
     qr.make(fit=True)
     qr.print_ascii(invert=True)
+
+
+def decompress_response(response):
+    content_encoding = response.headers.get('Content-Encoding')
+    if content_encoding == 'gzip':
+        return zlib.decompress(response.content, zlib.MAX_WBITS | 16)
+    elif content_encoding == 'deflate':
+        return zlib.decompress(response.content)
+    elif content_encoding == 'br':
+        return brotli.decompress(response.content)
+    else:
+        return response.content
 
 
 class Judgement:
@@ -70,7 +84,7 @@ class Judgement:
                     self.get_header["Cookie"] += cookie['name'] + "=" + cookie["value"] + ";"
                     self.post_header["Cookie"] += cookie['name'] + "=" + cookie["value"] + ";"
             check_url = "https://api.bilibili.com/x/web-interface/nav"
-            login_status = requests.get(url=check_url, headers=self.get_header).json()
+            login_status = requests.get(url=check_url, headers=self.get_header, verify=False).json()
             print(login_status)
             if not login_status["code"]:
                 logging.info(f'用户{login_status["data"]["uname"]}, 欢迎使用！')
@@ -80,6 +94,9 @@ class Judgement:
             else:
                 logging.warning("登录态失效，10s后重新登录！")
                 return False
+        except json.decoder.JSONDecodeError:
+            logging.error("JSON解析有误！请检查接口返回！")
+            return False
         except requests.exceptions.JSONDecodeError:
             logging.error("JSON解析有误！请检查接口返回！")
             return False
@@ -125,6 +142,9 @@ class Judgement:
             with open("cookies.json", "w", encoding="UTF-8") as f:
                 json.dump(cookies, fp=f, indent=4)
             return True
+        except json.decoder.JSONDecodeError:
+            logging.error("JSON解析有误！请检查接口返回！")
+            return False
         except requests.exceptions.JSONDecodeError:
             logging.error("JSON解析有误！请检查接口返回！")
             return False
@@ -137,15 +157,20 @@ class Judgement:
             "csrf": self.csrf,
         }
         try:
-            data_json = requests.get(url=url, headers=self.get_header, data=post_data).json()
+            get_datas = requests.get(url=url, headers=self.get_header, data=post_data, verify=False)
+            decompressed_content = decompress_response(get_datas)
+            data_json = json.loads(decompressed_content)
             if data_json["code"] != 0:
                 logging.error("Error:" + data_json["message"])
                 return False
             else:
                 logging.info(url + "发送GET请求成功！")
                 return data_json["data"]
+        except json.decoder.JSONDecodeError:
+            logging.error("GET JSON解析有误！请检查接口返回！")
+            return False
         except requests.exceptions.JSONDecodeError:
-            logging.error("JSON解析有误！请检查接口返回！")
+            logging.error("GET JSON解析有误！请检查接口返回！")
             return False
         except KeyError:
             logging.error("QR登录失败！")
@@ -153,15 +178,20 @@ class Judgement:
 
     def post_data(self, url, data):
         try:
-            data_json = requests.post(url=url, data=data, headers=self.post_header).json()
+            post_datas = requests.post(url=url, data=data, headers=self.post_header, verify=False)
+            decompressed_content = decompress_response(post_datas)
+            data_json = json.loads(decompressed_content)
             if data_json["code"] != 0:
                 logging.error("Error:" + data_json["message"])
                 return False
             else:
                 logging.info(url + "发送POST请求成功！")
                 return True
+        except json.decoder.JSONDecodeError:
+            logging.error("POST JSON解析有误！请检查接口返回！")
+            return False
         except requests.exceptions.JSONDecodeError:
-            logging.error("JSON解析有误！请检查接口返回！")
+            logging.error("POST JSON解析有误！请检查接口返回！")
             return False
         except KeyError:
             logging.error("QR登录失败！")
