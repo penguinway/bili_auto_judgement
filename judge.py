@@ -7,6 +7,7 @@ import qrcode
 import re
 import zlib
 import brotli
+import gzip
 import sys
 
 logging.basicConfig(
@@ -25,14 +26,17 @@ def qrcode_generate(data):
 
 def decompress_response(response):
     content_encoding = response.headers.get('Content-Encoding')
-    if content_encoding == 'gzip':
-        return zlib.decompress(response.content, zlib.MAX_WBITS | 16)
-    elif content_encoding == 'deflate':
-        return zlib.decompress(response.content)
-    elif content_encoding == 'br':
-        return brotli.decompress(response.content)
-    else:
-        return response.content
+    try:
+        if content_encoding == 'gzip':
+            return zlib.decompress(response.content, zlib.MAX_WBITS | 16)
+        elif content_encoding == 'deflate':
+            return zlib.decompress(response.content)
+        elif content_encoding == 'br':
+            return brotli.decompress(response.content)
+        else:
+            return response.content
+    except zlib.error:
+        return response.text
 
 
 class Judgement:
@@ -176,6 +180,9 @@ class Judgement:
             return False
         except requests.exceptions.JSONDecodeError:
             logging.error("GET JSON解析有误！请检查接口返回！")
+            return False
+        except zlib.error:
+            logging.error("GET 解压错误！")
             return False
         except KeyError:
             logging.error("QR登录失败！")
