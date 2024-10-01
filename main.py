@@ -74,7 +74,7 @@ if sign_status:
     # big_vip_sign()
     end_time, jury_status, apply_status = get_judge_data()
     logging.info("当前时间：" + str(datetime.datetime.now()))
-    logging.info("下一任期截止时间：" + str(end_time))
+    logging.info("当前任期截止时间：" + str(end_time))
     if jury_status == 2:
         if apply_status == -1:
             apply_for_jury()
@@ -84,8 +84,8 @@ if sign_status:
         while True:
             try:
                 judge_id = get_next_judge()
-                print(judge_id)
-                case_type = get_judge_info(case_id=judge_id)
+                # print(judge_id)
+                # case_type = get_judge_info(case_id=judge_id)
                 vote(vote_num=0, case_id=judge_id)
                 if case_type in [1, 3]:
                     vote(vote_num=1, case_id=judge_id)
