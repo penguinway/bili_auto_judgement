@@ -90,11 +90,11 @@ class Judgement:
                     self.post_header["Cookie"] += cookie['name'] + "=" + cookie["value"] + ";"
             check_url = "https://api.bilibili.com/x/web-interface/nav"
             login_status = requests.get(url=check_url, headers=self.get_header).json()
-            print(login_status)
+            # print(login_status)
             if not login_status["code"]:
                 logging.info(f'用户{login_status["data"]["uname"]}, 欢迎使用！')
                 logging.info("Cookies登录成功！")
-                print(self.get_header)
+                # print(self.get_header)
                 return True
             else:
                 logging.warning("登录态失效，10s后重新登录！")
@@ -173,7 +173,7 @@ class Judgement:
                 logging.error("Error:" + data_json["message"])
                 return False
             else:
-                logging.info(url + "发送GET请求成功！")
+                logging.critical(url + "发送GET请求成功！")
                 return data_json["data"]
         except json.decoder.JSONDecodeError:
             logging.error("GET JSON解析有误！请检查接口返回！")
@@ -201,7 +201,7 @@ class Judgement:
                 logging.error("Error:" + data_json["message"])
                 return False
             else:
-                logging.info(url + "发送POST请求成功！")
+                logging.critical(url + "发送POST请求成功！")
                 return True
         except json.decoder.JSONDecodeError:
             logging.error("POST JSON解析有误！请检查接口返回！")
